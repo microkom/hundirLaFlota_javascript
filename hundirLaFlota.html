@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<!--Juego hundir la flota.
+Permite agregar barcos modificando sólo la variable pool
+-->
+<html>
+    <head>
+        <title>Juego Hundir la flota</title>
+        <meta charset="UTF-8" />
+        <meta name="author" content="MOC CodeMadrid y Ángel Puente" />
+        <link href="../estilo.css" rel="stylesheet" type="text/css" />
+        <style>
+            *{
+                font-family: sans-serif;
+            }
+            #table td{
+                text-align:center;
+                border: 1px solid lightgray; 
+            }
+            #table{
+                border-spacing: 0;
+                border-collapse: collapse;
+
+            }
+            #fin{
+                text-align: center;
+                font-size: 30px;
+                color: #1a1;
+            }
+
+
+        </style>
+
+    </head>
+    <body>
+        <table align="center" border="0">
+            <tr>
+                <td width="300" align="center">HUNIDR LA FLOTA</td>
+            </tr>
+        </table>
+
+        <script>
+
+            //CREA LA TABLA QUE MUESTRA EL JUEGO
+            var counterT=0;
+            document.write('<table id="table" align="center" >');
+            for(let i=0; i<10; i++){
+                document.write("<tr>");
+                for(let j=0; j<10; j++){
+
+                    document.write('<td width="30" height="30" id="c'+counterT+'" onclick="pcelda('+counterT+')"></td>');
+                    counterT++;
+                }
+                document.write("</tr>");
+            }
+            document.write('</table>');
+        </script>
+
+        <table align="center" border="0">
+            <tr>
+                <td width="300"  align="center"><br />
+                    <a href="javascript:location.reload()">
+                        <button>Reiniciar</button></a>
+                </td>  
+            </tr>
+        </table>
+
+        <p id="fin"></p>
+        <script>
+
+            const LINEA = 10;
+            const HORZ = 0;
+            const VERT = 1;
+            const AGUA = 1; //1 OK, 0 developer
+
+            var pool = [6,5,4,3,2 ];  //Se pueden agregar o quitar barcos, el diseño del juego es dinámico
+            var pos ;
+            var orientacion ;
+
+            //inicio a 0 de contadores para la funcion ganar()
+            var cont= [];
+            for (let i=0; i<pool.length;i++){
+                cont[pool[i]]=0;
+            }
+
+            var mapa = [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            ];
+
+            for(let i=0; i<pool.length;i++){
+                barcos(pool[i]);
+            }
+
+            //posición inicial para el barco
+            function randPos(barco, orientacion){
+                let num;
+                if(orientacion === HORZ){
+                    num = Math.round(Math.random() * mapa.length-barco+1);
+                }else{
+                    num = Math.round(Math.random() * mapa.length-(barco*LINEA)+1);
+                }
+
+                //si el número es negativo lo cambia a positivo
+                if(num < 0){
+                    num *= -1; 
+                }
+                return num;
+            }
+
+            //inserta los barcos al azar
+            function barcos(barco){
+
+                //orientación: vert - hor
+                orientacion = Math.round(Math.random() * 1);
+
+
+                //punto inicial para el barco, pool[i] tiene encuenta la longitud del barco
+                pos = randPos(barco, orientacion);
+
+                if (mapa[pos] === 0){
+
+                    if (orientacion == HORZ){//horizontal
+
+                        //para evitar que se desborde si es horizontal
+                        if(pos%LINEA < (LINEA-barco+1) && espacioBarcoLibre(barco, orientacion, pos)){
+
+                            //codigo bueno aqui
+                            for(var i=pos; i<barco+pos;i++){
+                                mapa[i]=barco;
+                            }
+                        }else{ 
+                            //si la posición que ocupa todo el barco no son 0 o se desborda
+                            barcos(barco);
+                        }
+
+                    }else{  //VERTICAL
+                        //para evitar que se desborde si es vertical
+                        if(pos < mapa.length-LINEA*barco && espacioBarcoLibre(barco, orientacion, pos)){
+
+                            for(var i=pos; i<pos+(barco*LINEA);(i+=LINEA)){
+                                mapa[i]=barco;
+                            }
+
+                        }else{
+                            //si la posición que ocupa todo el barco no son 0 o se desborda
+                            barcos(barco);
+                        }
+                    }
+                }else{
+                    //si la posición inicial no es 0
+                    barcos(barco);
+                }
+            }
+
+            //Comprueba que el espacio donde se va a poner un barco esta libre
+            function espacioBarcoLibre(barco, orientacion, pos){
+
+                if (orientacion === VERT){
+                    for(let i=1; i<=barco; i++){
+                        if(mapa[pos+(LINEA*i)] !== 0)
+                            return false;
+                    }
+                }else{
+                    for(let i=1; i<=barco; i++){
+                        if(mapa[pos+i] !== 0)
+                            return false;
+                    }
+                }
+                return true;
+            }
+
+            //genera un valor hexadecimal para un color
+            function colorRandom(){
+                let hex ="#";
+
+                for (var i=0; i<6; i++){
+                    let number = Math.floor(Math.random()*16);
+                    hex += number.toString(16);
+                }
+                return hex;
+            }
+
+            //Genera colores aleatoriamente para usarlos para los barcos
+            var bgColors= [];
+            for(let i=0;i<pool.length ;i++){
+                bgColors[i] = colorRandom();
+            }
+
+           /* function boom(id) {
+                var x = document.createElement("IMG");
+                x.setAttribute("src", "boom.png");
+                x.setAttribute("width", "30");
+                document.getElementById(id).appendChild(x);
+                
+            }*/
+
+            function dibujar(){
+                for(i=0; i<100; i++){
+
+                    //Color para los barcos
+                    for(let j = 0; j<=pool.length ; j++){
+                        if(mapa[i]===  pool[j]*10){
+                            document.getElementById("c"+i).style.backgroundColor= bgColors[j];
+                            //boom("c"+i);
+                        }
+                    }
+                    //Color para los espacios en blanco
+                    if(mapa[i] === AGUA) document.getElementById("c"+i).style.backgroundColor="#def";
+                }
+            }
+            function pcelda(celda){
+
+                //celdas con barco
+                for(let i = 0; i<=pool.length ; i++){
+                    if(mapa[celda]=== pool[i]){
+                        mapa[celda] = pool[i]*10;
+                        tocar(); 
+                        ganar(celda);
+                    }
+                }
+
+                //celdas en blanco
+                if(mapa[celda]===0){
+                    mapa[celda] = 1;
+                    ganar(celda);
+                }
+                dibujar();
+            }
+
+            //dice cuando un barco ha sido tocado
+            function tocar(){					
+                //setTimeout(function(){window.alert("Tocado");}, 90);
+            }
+
+            function ganar(celda){
+
+                if(mapa[celda]===1){
+                    //setTimeout(function(){window.alert("Agua");clearTimeout(texto);}, 100);
+                }
+                for(let j = 0; j<=pool.length ; j++){
+
+                    if(mapa[celda]===  pool[j]*10){
+                        cont[pool[j]]++;
+                        if(cont[pool[j]]===pool[j])
+                            setTimeout(function(){window.alert("Hundido");}, 100);
+                    }
+                }
+                let vesselDown=0; //contador de barcos hundidos
+                for(let i=0;i<pool.length;i++){
+                    if( cont[pool[i]]=== pool[i])
+                        vesselDown++
+                }
+                if (vesselDown === pool.length)
+                    setTimeout(function(){document.getElementById("fin").innerHTML ="Juego Terminado";}, 400);
+
+            }
+
+
+        </script>
+
+    </body>
+</html>
